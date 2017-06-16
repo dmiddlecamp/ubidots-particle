@@ -32,6 +32,7 @@ Modified by Jose Garcia for Ubidots Inc
 #include "spark_wiring_string.h"
 #include "spark_wiring_tcpclient.h"
 #include "spark_wiring_usbserial.h"
+#include "AsyncTCPClient.h"
 
 #ifndef SERVER
 #define SERVER "translate.ubidots.com"
@@ -97,8 +98,12 @@ class Ubidots {
     void setMethod(uint8_t method); // Default UDP
     unsigned long ntpUnixTime();
 
+    void loop();
+
  private:
-    TCPClient _client;
+    //TCPClient _client;
+    AsyncTCPClient _client;
+
     UDP _clientUDP;
     UDP _clientTMP;
     Value * val;

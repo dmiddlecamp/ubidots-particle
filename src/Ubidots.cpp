@@ -48,7 +48,9 @@ Ubidots::Ubidots(char* token, char* server) {
     String str = System.deviceID();
     _pId = new char[str.length() + 1];
     strcpy(_pId, str.c_str());
+    _client.setup();
 }
+
 
 
 /***************************************************************************
@@ -73,13 +75,14 @@ float Ubidots::getValue(char* id) {
     sprintf(data, "%s/%s|GET|%s|%s|end", USER_AGENT, VERSION, _token, id);
 
     Spark.process(); // Cleans previous processes
-    _client.connect(SERVER, PORT); // Initial connection
+    //_client.connect(SERVER, PORT); // Initial connection
+    _client.asyncConnect(SERVER, PORT); // Initial connection
 
-    while (!_client.connected()) {
+    while (!_client.asyncConnected()) {
         if (_debug) {
             Serial.println("Attemping to connect");
         }
-        _client.connect(SERVER, PORT);
+        _client.asyncConnect(SERVER, PORT);
         max_retries++;
         if (max_retries > 5) {
             if (_debug) {
@@ -172,13 +175,13 @@ float Ubidots::getValueWithDatasource(char* device, char* variable) {
     sprintf(data, "%s/%s|LV|%s|%s:%s|end", USER_AGENT, VERSION, _token, device, variable);
 
     Spark.process(); // Cleans previous processes
-    _client.connect(SERVER, PORT); // Initial connection
+    _client.asyncConnect(SERVER, PORT); // Initial connection
 
-    while (!_client.connected()) {
+    while (!_client.asyncConnected()) {
         if (_debug) {
             Serial.println("Attemping to connect");
         }
-        _client.connect(SERVER, PORT);
+        _client.asyncConnect(SERVER, PORT);
         max_retries++;
         if (max_retries > 5) {
             if (_debug) {
@@ -273,13 +276,13 @@ float Ubidots::getValueHTTP(char* id) {
     sprintf(data, "%sX-Auth-Token: %s\r\nConnection: close\r\n\r\n", data, _token);
 
     Spark.process(); // Cleans previous processes
-    _client.connect(SERVERHTTP, PORTHTTP); // Initial connection
+    _client.asyncConnect(SERVERHTTP, PORTHTTP); // Initial connection
 
-    while (!_client.connected()) {
+    while (!_client.asyncConnected()) {
         if (_debug) {
             Serial.println("Attemping to connect");
         }
-        _client.connect(SERVERHTTP, PORTHTTP);
+        _client.asyncConnect(SERVERHTTP, PORTHTTP);
         max_retries++;
         if (max_retries > 5) {
             if (_debug) {
@@ -377,13 +380,13 @@ char* Ubidots::getVarContext(char* id) {
     sprintf(data, "%sX-Auth-Token: %s\r\nConnection: close\r\n\r\n", data, _token);
 
     Spark.process(); // Cleans previous processes
-    _client.connect(SERVERHTTP, PORTHTTP); // Initial connection
+    _client.asyncConnect(SERVERHTTP, PORTHTTP); // Initial connection
 
-    while (!_client.connected()) {
+    while (!_client.asyncConnected()) {
         if (_debug) {
             Serial.println("Attemping to connect");
         }
-        _client.connect(SERVERHTTP, PORTHTTP);
+        _client.asyncConnect(SERVERHTTP, PORTHTTP);
         max_retries++;
         if (max_retries > 5) {
             if (_debug) {
@@ -648,12 +651,12 @@ bool Ubidots::sendAllUDP(char* buffer) {
 
 bool Ubidots::sendAllTCP(char* buffer) {
     int i = 0;
-    while (!_client.connected() && i < 6) {
+    while (!_client.asyncConnected() && i < 6) {
         i++;
         if (_debug) {
             Serial.println("not connected, trying to connect again");
         }
-        _client.connect(_server, PORT);
+        _client.asyncConnect(_server, PORT);
         if (i == 5) {
             if (_debug) {
                 Serial.println("Max attempts to connect reached, data could not be sent");
@@ -661,7 +664,7 @@ bool Ubidots::sendAllTCP(char* buffer) {
             return false;
         }
     }
-    if (_client.connected()) {        // Connect to the server
+    if (_client.asyncConnected()) {        // Connect to the server
         if (_debug) {
             Serial.println("Sending data");
         }
@@ -716,7 +719,7 @@ unsigned long Ubidots::ntpUnixTime () {
     // Clear received data from possible stray received packets
     _clientTMP.flush();
 
-    _client.connect(TIME_SERVER, 123);
+    _client.asyncConnect(TIME_SERVER, 123);
     IPAddress ipAddress = _client.remoteIP();
     _client.stop();
 
@@ -793,4 +796,8 @@ bool Ubidots::setDatasourceTag(char* dsTag) {
     Serial.print("please try to use the setDeviceLabel() method instead");
     _pId = dsTag;
     return true;
+}
+
+void Ubidots::loop() {
+    _client.loop();
 }
